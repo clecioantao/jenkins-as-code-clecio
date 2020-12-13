@@ -1,0 +1,62 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  namespace: default
+  name: jenkins
+spec:
+  replicas: 1
+  selector: 
+    matchLabels:
+      app: jenkins
+  template:
+    metadata:
+      labels:
+        app: jenkins
+    spec:
+      containers:
+        - name: jenkins
+          image: local/jacc:1.0
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: JAVA_OPTS
+              value: -Djenkins.install.runSetupWizard=false
+            - name: KUBERNETES_SERVER_URL
+              value: https://192.168.2.69:6443
+            - name: JENKINS_SERVER_URL
+              value: http://192.168.2.69:8080
+            - name: MY_NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: MY_POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+            - name: MY_POD_NAMESPACE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.namespace
+            - name: MY_POD_IP
+              valueFrom:
+                fieldRef:
+                  fieldPath: status.podIP
+            - name: MY_POD_SERVICE_ACCOUNT
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.serviceAccountName
+          ports:
+            - name: http-port
+              containerPort: 8080
+            - name: jnlp-port
+              containerPort: 50000
+          volumeMounts:
+          - mountPath: /var/jenkins_home
+            name: jenkins              
+      restartPolicy: Always
+      securityContext:
+        runAsUser: 0
+      terminationGracePeriodSeconds: 30
+      volumes:
+      - name: jenkins
+        persistentVolumeClaim:
+          claimName: jenkins-claim

@@ -1,0 +1,11 @@
+import javaposse.jobdsl.plugin.*
+
+node('jenkins-slave') {
+
+    
+     stage('unit-tests') {
+        sh(script: """
+            echo "teste"
+        """)
+    }
+}
